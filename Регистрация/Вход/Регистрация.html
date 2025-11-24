@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Registration — Logistics Platform</title>
+  <style>
+    :root{
+      --bg:#FFFFFF;
+      --panel:#F3F4F6;
+      --muted:#E5E7EB;
+      --text:#111827;
+      --accent:#3B82F6;
+      --alt:#6B7280;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{height:100vh;display:grid;grid-template-columns:1fr 480px}
+    .left{position:relative;overflow:hidden;background:var(--panel)}
+    canvas#meshCanvas{width:100%;height:100%;display:block;opacity:0.65}
+    .lang-switch{position:fixed;top:16px;right:16px;display:flex;gap:10px;z-index:20}
+    .lang-switch button{padding:8px 14px;border-radius:8px;border:1px solid var(--muted);background:white;font-size:14px;cursor:pointer;transition:0.25s;}
+    .lang-switch button.active{background:var(--accent);color:white;border-color:var(--accent)}
+    .right{display:flex;align-items:center;justify-content:center;padding:40px}
+    .card{width:100%;max-width:420px;background:var(--panel);padding:30px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,0.06)}
+    h1{font-size:24px;margin-bottom:8px}
+    .lead{color:var(--alt);margin-bottom:20px}
+    label{font-size:13px;color:var(--alt);margin-bottom:4px;display:block}
+    input,select{width:100%;padding:12px;border-radius:8px;border:1px solid var(--muted);margin-bottom:4px;font-size:15px}
+    .row{display:flex;gap:12px}
+    .row .col{flex:1}
+    .btn{padding:12px;border-radius:10px;border:0;background:var(--accent);color:white;font-weight:600;cursor:pointer;width:100%;margin-top:8px}
+    .small{font-size:13px;color:var(--alt);margin-top:10px;display:block;text-align:center}
+    .small a{color:var(--accent)}
+
+    /* Ошибки под полями */
+    .field{display:block}
+    .field-error input,
+    .field-error select{border-color:#dc2626;background:#fff;box-shadow:0 0 0 1px rgba(220,38,38,0.18)}
+    .field-error-message{margin-top:2px;margin-bottom:8px;display:flex;align-items:flex-start;gap:4px;font-size:11px;line-height:1.3;color:#dc2626}
+    .field-error-message-icon{flex-shrink:0;width:14px;height:14px;border-radius:999px;background:#fee2e2;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#dc2626}
+    .field-error-message-text{flex:1}
+    .global-message{margin-bottom:10px;font-size:12px;border-radius:8px;padding:6px 8px;display:none}
+    .global-message--success{display:block;background:#ecfdf3;color:#166534;border:1px solid #bbf7d0}
+    .global-message--error{display:block;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+  </style>
+</head>
+<body>
+
+<div class="lang-switch">
+  <button id="lang-ru" class="active">RU</button>
+  <button id="lang-en">EN</button>
+</div>
+
+<div class="wrap">
+  <div class="left"><canvas id="meshCanvas"></canvas></div>
+
+  <main class="right">
+    <section class="card" id="registrationCard">
+      <h1 id="signupTitle">Создать аккаунт</h1>
+      <p class="lead" id="lead">Добро пожаловать в логистическую среду</p>
+
+      <div id="globalMessage" class="global-message"></div>
+
+      <!-- Роль -->
+      <div class="field" data-field="role">
+        <label id="role-label" for="role">Роль</label>
+        <select id="role">
+          <option value="">Выберите вашу роль</option>
+          <option value="client">Клиент</option>
+          <option value="logistics">Логистическая компания</option>
+          <option value="declarant">Декларант</option>
+          <option value="driver">Водитель</option>
+        </select>
+        <div class="field-error-message" data-error-for="role" style="display:none;">
+          <span class="field-error-message-icon">!</span>
+          <span class="field-error-message-text"></span>
+        </div>
+      </div>
+
+      <!-- Имя и Фамилия -->
+      <div class="row">
+        <div class="col field" data-field="first">
+          <label for="first" id="lab-first">Имя</label>
+          <input id="first">
+          <div class="field-error-message" data-error-for="first" style="display:none;">
+            <span class="field-error-message-icon">!</span>
+            <span class="field-error-message-text"></span>
+          </div>
+        </div>
+        <div class="col field" data-field="last">
+          <label for="last" id="lab-last">Фамилия</label>
+          <input id="last">
+          <div class="field-error-message" data-error-for="last" style="display:none;">
+            <span class="field-error-message-icon">!</span>
+            <span class="field-error-message-text"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="field" data-field="email">
+        <label id="lab-email" for="email">Email</label>
+        <input id="email" type="email">
+        <div class="field-error-message" data-error-for="email" style="display:none;">
+          <span class="field-error-message-icon">!</span>
+          <span class="field-error-message-text"></span>
+        </div>
+      </div>
+
+      <!-- Пароль и Подтверждение -->
+      <div class="row">
+        <div class="col field" data-field="password">
+          <label for="password" id="lab-pass">Пароль</label>
+          <input id="password" type="password">
+          <div class="field-error-message" data-error-for="password" style="display:none;">
+            <span class="field-error-message-icon">!</span>
+            <span class="field-error-message-text"></span>
+          </div>
+        </div>
+        <div class="col field" data-field="confirm">
+          <label for="confirm" id="lab-conf">Подтвердить</label>
+          <input id="confirm" type="password">
+          <div class="field-error-message" data-error-for="confirm" style="display:none;">
+            <span class="field-error-message-icon">!</span>
+            <span class="field-error-message-text"></span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn" id="btn" disabled>Зарегистрироваться</button>
+      <span class="small"><span id="already-text">Уже есть аккаунт?</span> <a id="login" href="Вход.html">Войти</a></span>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  const canvas=document.getElementById('meshCanvas');
+  const ctx=canvas.getContext('2d');
+  function resize(){canvas.width=canvas.clientWidth;canvas.height=canvas.clientHeight;}
+  resize();window.addEventListener('resize',resize);
+
+  const hubs=[];
+  const COUNT_HUBS=20;
+  for(let i=0;i<COUNT_HUBS;i++) hubs.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, alpha:0});
+
+  const flows=[];
+  const COUNT_GREEN=40;
+  for(let i=0;i<COUNT_GREEN;i++){
+    const from=hubs[Math.floor(Math.random()*COUNT_HUBS)];
+    let to=hubs[Math.floor(Math.random()*COUNT_HUBS)];
+    while(to===from) to=hubs[Math.floor(Math.random()*COUNT_HUBS)];
+    flows.push({from,to,speed:0.5+Math.random()*0.4, x: from.x, y: from.y, alpha:0, visibleAlpha:0});
+  }
+
+  const transportDots=[];
+  const COUNT_TRANSPORT=10;
+  for(let i=0;i<COUNT_TRANSPORT;i++){
+    const from=hubs[Math.floor(Math.random()*COUNT_HUBS)];
+    let to=hubs[Math.floor(Math.random()*COUNT_HUBS)];
+    while(to===from) to=hubs[Math.floor(Math.random()*COUNT_HUBS)];
+    transportDots.push({x:from.x,y:from.y,from,to,speed:0.4+Math.random()*0.2,offset:Math.random()*Math.PI*2, alpha:0, visibleAlpha:0});
+  }
+
+  class Ship{
+    constructor(start,end){
+      this.start=start;this.end=end;
+      this.progress=0;
+      this.phase=Math.random()*Math.PI*2;
+      this.amplitude=6+Math.random()*4;
+      this.frequency=1+Math.random()*1.5;
+      this.lastT=performance.now();
+      this.pos={x:start.x,y:start.y};
+      this.alpha=0;
+      this.duration=this.getDuration();
+    }
+    getDuration(){
+      const dx=this.end.x-this.start.x;
+      const dy=this.end.y-this.start.y;
+      const dist=Math.sqrt(dx*dx+dy*dy)||1;
+      return Math.min(Math.max(dist/0.015, 6000), 25000);
+    }
+    update(now){
+      const dt=now-this.lastT;this.lastT=now;
+      this.progress+=dt/this.duration;
+      const t=this.progress;
+      const sx=this.start.x,sy=this.start.y;
+      const ex=this.end.x,ey=this.end.y;
+      const bx=sx+(ex-sx)*t;
+      const by=sy+(ey-sy)*t;
+      const dx=ex-sx,dy=ey-sy;
+      const len=Math.sqrt(dx*dx+dy*dy)||1;
+      const px=-dy/len,py=dx/len;
+      const wave=Math.sin(t*this.frequency*Math.PI*2+this.phase)*this.amplitude;
+      this.pos.x=bx+px*wave;
+      this.pos.y=by+py*wave;
+      if(this.alpha<1)this.alpha+=0.01;
+    }
+    draw(ctx, fade=1){
+      ctx.save();
+      ctx.translate(this.pos.x,this.pos.y);
+      ctx.globalAlpha = fade * this.alpha;
+      const top = 6 * 1.2;
+      const bottom = 4;
+      ctx.fillStyle='rgba(16,185,129,0.95)';
+      ctx.beginPath();
+      ctx.moveTo(-top,-4);
+      ctx.lineTo(top,-4);
+      ctx.lineTo(bottom,4);
+      ctx.lineTo(-bottom,4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  const ships=[];
+  for(let i=0;i<3;i++){
+    const from=hubs[Math.floor(Math.random()*hubs.length)];
+    let to=hubs[Math.floor(Math.random()*hubs.length)];
+    while(to===from) to=hubs[Math.floor(Math.random()*hubs.length)];
+    ships.push(new Ship(from,to));
+  }
+
+  function drawTriangle(x, y, angle, size, alpha) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.shadowColor = 'rgba(0,0,0,0.22)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetX = 4;
+    ctx.shadowOffsetY = 6;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(255,200,0,1)';
+    ctx.beginPath();
+    ctx.moveTo(0, -size);
+    ctx.lineTo(-size * 0.6, size);
+    ctx.lineTo(size * 0.6, size);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function loop(now){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    flows.forEach(f=>{
+      if(f.visibleAlpha<1) f.visibleAlpha += 0.005;
+      ctx.beginPath();
+      ctx.moveTo(f.from.x,f.from.y);
+      ctx.lineTo(f.to.x,f.to.y);
+      ctx.strokeStyle='rgba(59,130,246,'+f.visibleAlpha*0.18+')';
+      ctx.lineWidth=1;
+      ctx.stroke();
+      const dx=f.to.x-f.x, dy=f.to.y-f.y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist>1){f.x+=dx/dist*f.speed; f.y+=dy/dist*f.speed;}
+      else{f.x=f.from.x; f.y=f.from.y;}
+      ctx.beginPath();
+      ctx.arc(f.x,f.y,3,0,Math.PI*2);
+      ctx.fillStyle='rgba(16,185,129,0.8)';
+      ctx.fill();
+    });
+
+    hubs.forEach(h=>{ if(h.alpha<1) h.alpha+=0.005;
+      ctx.beginPath();
+      ctx.arc(h.x,h.y,6,0,Math.PI*2);
+      ctx.fillStyle='rgba(59,130,246,'+h.alpha*0.8+')';
+      ctx.fill();
+    });
+
+    transportDots.forEach(d=>{
+      if(d.visibleAlpha<1) d.visibleAlpha += 0.005;
+      const dx=d.to.x-d.x,dy=d.to.y-d.y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist>0){d.x+=dx/dist*d.speed;d.y+=dy/dist*d.speed;}
+      const blink = Math.abs(Math.sin(now * 0.003 + d.offset));
+      const fade = dist<30 ? dist/30 : 1;
+      const alpha = (0.4 + 0.6 * blink) * fade * d.visibleAlpha;
+      const angle=Math.atan2(dy,dx)+Math.PI/2;
+      drawTriangle(d.x,d.y,angle,6,alpha);
+      if(dist<1){d.x=d.from.x; d.y=d.from.y;}
+    });
+
+    ships.forEach(s=>{
+      s.update(now);
+      const dx=s.end.x-s.pos.x, dy=s.end.y-s.pos.y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      const shipFade = dist<30 ? dist/30 : 1;
+      s.draw(ctx, shipFade);
+      if(s.progress>=1){
+        s.start = s.end;
+        let to = hubs[Math.floor(Math.random()*hubs.length)];
+        let k=0; while(to===s.start && k<10){to = hubs[Math.floor(Math.random()*hubs.length)]; k++;
+        }
+        s.end = to;
+        s.progress = 0;
+      }
+    });
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})();
+</script>
+
+<script>
+(function(){
+  const ru=document.getElementById('lang-ru');
+  const en=document.getElementById('lang-en');
+  const L={
+    ru:{title:"Создать аккаунт",lead:"Добро пожаловать в логистическую среду",first:"Имя",last:"Фамилия",email:"Email",password:"Пароль",confirm:"Подтвердить",role:"Роль",client:"Клиент",logistics:"Логистическая компания",declarant:"Декларант",driver:"Водитель",already:"Уже есть аккаунт?",login:"Войти",btn:"Зарегистрироваться"},
+    en:{title:"Create account",lead:"Welcome to the logistics environment",first:"First name",last:"Last name",email:"Email",password:"Password",confirm:"Confirm",role:"Role",client:"Client",logistics:"Logistics company",declarant:"Declarant",driver:"Driver",already:"Already have an account?",login:"Log in",btn:"Sign up"}
+  };
+  function setLang(lang){
+    const t=L[lang];
+    document.getElementById('signupTitle').textContent=t.title;
+    document.getElementById('lead').textContent=t.lead;
+    document.getElementById('role-label').textContent=t.role;
+    document.getElementById('lab-first').textContent=t.first;
+    document.getElementById('lab-last').textContent=t.last;
+    document.getElementById('lab-email').textContent=t.email;
+    document.getElementById('lab-pass').textContent=t.password;
+    document.getElementById('lab-conf').textContent=t.confirm;
+    document.getElementById('btn').textContent=t.btn;
+    document.getElementById('already-text').textContent=t.already;
+    document.getElementById('login').textContent=t.login;
+    const role=document.getElementById('role');
+    role.options[0].text=t.client;
+    role.options[1].text=t.logistics;
+    role.options[2].text=t.declarant;
+    role.options[3].text=t.driver;
+  }
+  ru.onclick=()=>{ru.classList.add('active');en.classList.remove('active');setLang('ru');};
+  en.onclick=()=>{en.classList.add('active');ru.classList.remove('active');setLang('en');};
+})();
+</script>
+
+<script>
+// Расширенная валидация формы регистрации в стиле SaaS: ошибки под полями, onBlur + instant feedback
+(function(){
+  const btn = document.getElementById('btn');
+  const globalMessage = document.getElementById('globalMessage');
+
+  const fields = {
+    role: document.getElementById('role'),
+    first: document.getElementById('first'),
+    last: document.getElementById('last'),
+    email: document.getElementById('email'),
+    password: document.getElementById('password'),
+    confirm: document.getElementById('confirm')
+  };
+
+  const errors = { role:'', first:'', last:'', email:'', password:'', confirm:'' };
+
+  function setFieldError(name,msg){
+    errors[name] = msg;
+    const wrapper = document.querySelector('[data-field="'+name+'"]');
+    const row = document.querySelector('[data-error-for="'+name+'"]');
+    if(!wrapper || !row) return;
+    const textEl = row.querySelector('.field-error-message-text');
+    if(msg){
+      wrapper.classList.add('field-error');
+      textEl.textContent = msg;
+      row.style.display = 'flex';
+    }else{
+      wrapper.classList.remove('field-error');
+      textEl.textContent = '';
+      row.style.display = 'none';
+    }
+    updateButtonState();
+  }
+
+  function hasAnyError(){
+    return Object.values(errors).some(Boolean);
+  }
+
+  function allFilled(){
+    return fields.role.value &&
+           fields.first.value.trim() &&
+           fields.last.value.trim() &&
+           fields.email.value.trim() &&
+           fields.password.value &&
+           fields.confirm.value;
+  }
+
+  function updateButtonState(){
+    btn.disabled = hasAnyError() || !allFilled();
+  }
+
+  function clearGlobalMessage(){
+    globalMessage.className = 'global-message';
+    globalMessage.textContent = '';
+  }
+
+  function isValidEmail(v){
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return false;
+    const allowedDomains = [
+      'gmail.com','outlook.com','hotmail.com','live.com','yahoo.com','icloud.com','me.com','mac.com',
+      'mail.ru','inbox.ru','bk.ru','list.ru','yandex.ru','yandex.com','ya.ru',
+      'proton.me','protonmail.com','gmx.com','zoho.com',
+      'hey.com','pm.me','aol.com','qq.com','163.com','naver.com','seznam.cz','web.de','libero.it','tutanota.com'
+    ];
+    const domain = v.split('@')[1].toLowerCase();
+    return allowedDomains.includes(domain);
+  }
+
+  function checkPasswordStrength(v){
+    const list=[];
+    if(v.length < 8) list.push('не менее 8 символов');
+    if(!/[A-Za-zА-Яа-я]/.test(v)) list.push('хотя бы одна буква');
+    if(!/[0-9]/.test(v)) list.push('хотя бы одна цифра');
+    if(!/[!@#$%^&*()_\-+=\[{\]};:<>|./?`~]/.test(v)) list.push('хотя бы один спецсимвол');
+    return list;
+  }
+
+  function validateRole(){
+    if(!fields.role.value){
+      setFieldError('role','Выберите вашу роль.');
+    }else{
+      setFieldError('role','');
+    }
+  }
+
+  function validateNameField(key,label){
+    const v = fields[key].value.trim();
+    if(!v){
+      setFieldError(key,label+' обязательно для заполнения.');
+      return;
+    }
+    if(v.length < 2){
+      setFieldError(key,label+' должно содержать минимум 2 буквы.');
+      return;
+    }
+    if(!/^[A-Za-zА-Яа-яЁё]+$/.test(v)){
+      setFieldError(key,label+' может содержать только буквы.');
+      return;
+    }
+    setFieldError(key,'');
+  }
+
+  function validateFirst(){ validateNameField('first','Имя'); }
+  function validateLast(){ validateNameField('last','Фамилия'); }
+
+  function validateEmailBasic(){
+    const v = fields.email.value.trim();
+    if(!v){
+      setFieldError('email','Email обязателен для заполнения.');
+      return false;
+    }
+    if(!isValidEmail(v)){
+      setFieldError('email','Введите корректный email.');
+      return false;
+    }
+    setFieldError('email','');
+    return true;
+  }
+
+  let emailCheckToken = null;
+
+  function fakeServerCheckEmail(email){
+    const taken = ['test@example.com','demo@hermes.io','user@company.com'];
+    return new Promise(res=>{
+      setTimeout(()=>{
+        if(taken.includes(email.toLowerCase())){
+          res({ok:false,json:{error:'email_taken',message:'Этот email уже зарегистрирован'}});
+        }else{
+          res({ok:true,json:{}});
+        }
+      },400);
+    });
+  }
+
+  async function validateEmailWithServer(){
+    if(!validateEmailBasic()) return;
+    const email = fields.email.value.trim();
+    const token = email;
+    emailCheckToken = token;
+    const resp = await fakeServerCheckEmail(email);
+    if(emailCheckToken !== token) return;
+    if(!resp.ok && resp.json && resp.json.error === 'email_taken'){
+      setFieldError('email',resp.json.message);
+    }else if(errors.email && errors.email.indexOf('зарегистрирован') !== -1){
+      setFieldError('email','');
+    }
+  }
+
+  function validatePassword(){
+    const v = fields.password.value;
+    if(!v){
+      setFieldError('password','Пароль обязателен для заполнения.');
+      return;
+    }
+    const weak = checkPasswordStrength(v);
+    if(weak.length){
+      setFieldError('password','Пароль слишком простой: '+weak.join(', ')+'.');
+    }else{
+      setFieldError('password','');
+    }
+    validateConfirm();
+  }
+
+  function validateConfirm(){
+    const p = fields.password.value;
+    const c = fields.confirm.value;
+    if(!c){
+      setFieldError('confirm','Повторите пароль.');
+      return;
+    }
+    if(p !== c){
+      setFieldError('confirm','Пароли не совпадают.');
+    }else{
+      setFieldError('confirm','');
+    }
+  }
+
+  // onBlur: включаем ошибки
+  fields.role.addEventListener('blur',validateRole);
+  fields.first.addEventListener('blur',validateFirst);
+  fields.last.addEventListener('blur',validateLast);
+  fields.email.addEventListener('blur',validateEmailWithServer);
+  fields.password.addEventListener('blur',validatePassword);
+  fields.confirm.addEventListener('blur',validateConfirm);
+
+  // input: instant feedback
+  fields.role.addEventListener('input',validateRole);
+  fields.first.addEventListener('input',validateFirst);
+  fields.last.addEventListener('input',validateLast);
+  fields.email.addEventListener('input',validateEmailBasic);
+  fields.password.addEventListener('input',validatePassword);
+  fields.confirm.addEventListener('input',validateConfirm);
+
+  Object.values(fields).forEach(el=>{
+    el.addEventListener('input',updateButtonState);
+  });
+
+  btn.addEventListener('click',async function(e){
+    e.preventDefault();
+    clearGlobalMessage();
+    validateRole();
+    validateFirst();
+    validateLast();
+    validatePassword();
+    validateConfirm();
+    await validateEmailWithServer();
+    if(hasAnyError() || !allFilled()){
+      globalMessage.className='global-message global-message--error';
+      globalMessage.textContent='Проверьте корректность данных в форме.';
+      return;
+    }
+    // Успешная регистрация (демо): показываем сообщение. Здесь можно сохранить в localStorage/отправить на сервер.
+    globalMessage.className='global-message global-message--success';
+    globalMessage.textContent='Регистрация успешна. Теперь вы можете войти.';
+  });
+
+  updateButtonState();
+})();
+</script>
+
+</body>
+</html>
